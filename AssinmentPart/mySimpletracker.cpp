@@ -39,7 +39,11 @@ void writeLog(string message);
 void peerService(int clientSocketDes,string ip,int port);
 void createNewUser(string userId,string password,int clientSocketDes);
 void login(string userId,string password,int clientSocketDes);
-void create_group(string userId,string groupId,int clientSocketDes);
+void createGroup(string userId,string groupId,int clientSocketDes);
+void join_group(string groupId,string userId,int clientSocketDes);
+void  leave_group(string groupId,string userId,int clientSocketDes);
+
+
 int main(int argc, char *argv[]){
 
 	if (argc != 3)
@@ -239,13 +243,13 @@ void peerService(int clientSocketDes,string ip,int port)
 	{
       string group_id=requestToServe[1];
       string user_id=requestToServe[2];
-      create_group(user_id,group_id,clientSocketDes);
+      createGroup(user_id,group_id,clientSocketDes);
 	}
 	else if(myCommand=="join_group")
 	{
-      // string group_id=requestToServe[1];
-      // string user_id=requestToServe[2];
-      // join_group(clientSocketDes,group_id,user_id);
+      string group_id=requestToServe[1];
+      string user_id=requestToServe[2];
+      join_group(group_id,user_id,clientSocketDes);
 	}
 	
 	else if(myCommand=="upload_file")
@@ -273,9 +277,9 @@ void peerService(int clientSocketDes,string ip,int port)
 	}
 	else if(myCommand=="leave_group")
 	{
-      //  string group_id=requestToServe[1];
-      // string user_id=requestToServe[2];
-      // leave_group(clientSocketDes,group_id,user_id);
+      string group_id=requestToServe[1];
+      string user_id=requestToServe[2];
+      leave_group(group_id,user_id,clientSocketDes);
 	}
 	else if(myCommand=="list_requests")
 	{
@@ -303,7 +307,7 @@ void peerService(int clientSocketDes,string ip,int port)
 
 }
 
-void create_group(string userId,string groupId,int clientSocketDes){
+void createGroup(string userId,string groupId,int clientSocketDes){
 
 	if(groupInfo.find(groupId)!=groupInfo.end())
 	{
@@ -319,4 +323,56 @@ void create_group(string userId,string groupId,int clientSocketDes){
 
 	}
 	close(clientSocketDes);
+}
+
+void join_group(string groupId,string userId,int clientSocketDes){
+
+    if(groupInfo.find(groupId)!=groupInfo.end())
+	{
+		
+		 if(groupInfo[groupId].find(userId)!=groupInfo[groupId].end()){
+		 	char status[]="2";
+		 	send(clientSocketDes,status,sizeof(status),0);
+		 }else{
+		 	groupInfo[groupId].insert(userId);
+		 	char status[]="1";
+		 	send(clientSocketDes,status,sizeof(status),0);
+		 }	    
+
+	}
+	else
+	{
+
+	  char status[]="0";
+	  send(clientSocketDes,status,sizeof(status),0);
+
+	}
+	close(clientSocketDes);
+	
+	
+}
+
+void  leave_group(string groupId,string userId,int clientSocketDes)
+{
+	
+    if(groupInfo.find(groupId)!=groupInfo.end())
+	{
+		
+		 if(groupInfo[groupId].find(userId)!=groupInfo[groupId].end()){
+		 	char status[]="1";
+		 	groupInfo[groupId].erase(userId);
+		 	send(clientSocketDes,status,sizeof(status),0);
+		 }   
+
+	}
+	else
+	{
+
+	  char status[]="0";
+	  send(clientSocketDes,status,sizeof(status),0);
+
+	}
+	close(clientSocketDes);
+
+	
 }

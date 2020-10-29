@@ -56,6 +56,9 @@ int socket_creation_to_server(string ip_address, int port_address);
 void create_user(vector<string > clientRequest);
 void login(vector<string > clientRequest);
 void create_group(vector<string>clientRequest);
+void join_group(vector<string>clientRequest);
+
+void leave_group(vector<string>clientRequest);
 
 
 
@@ -136,44 +139,44 @@ int main(int argc,char ** argv)
       }
       else if(command=="join_group")
       {
-      	cout<<" Not imlemented yet " <<command<<endl;
+      
 
-         // cout<<"In line 343"<<endl;
-
-         //     if(!islogedin)
-         //  {
-         // cout<<"Please enter the login cred to enter into the system"<<endl;
-         // goto l2;
-         //  }
-         //    if(clientRequest.size()!=2)
-         //    {
-         //       cout<<"Enter the valid argument"<<endl;
-         //       goto l2;
-         //    }
-         //    else
-         //    {
-         //       threadVector.push_back(thread(join_group,clientRequest[1]));
-         //    }
+        
+             if(!isLoggedIn)
+              {
+                cout<<"Please first login into the system"<<endl;
+                continue;
+            
+              }
+            if(clientRequest.size()!=2)
+            {
+              cout<<"Invalid arguments for joining group"<<endl;
+               
+            }
+            else
+            {
+               threadVector.push_back(thread(join_group,clientRequest));
+            }
       }
       else if(command=="leave_group")
       {
-        // cout<<"In line 877"<<endl;
+       
 
-         //     if(!islogedin)
-         //  {
-         // cout<<"Please enter the login cred to enter into the system"<<endl;
-         // goto l2;
-         //  }
-         //    if(clientRequest.size()!=2)
-         //    {
-         //       cout<<"Enter the valid argument"<<endl;
-         //       goto l2;
-         //    }
-         //    else
-         //    {
-         //       threadVector.push_back(thread(leave_group,clientRequest[1]));
-         //    }
-      	cout<<" Not imlemented yet " <<command<<endl;
+             if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+                   }
+            if(clientRequest.size()!=2)
+            {
+               cout<<"Invalid arguments for joining group"<<endl;
+               
+            }
+            else
+            {
+               threadVector.push_back(thread(leave_group,clientRequest));
+            }
+      	
 
       }
       else if(command=="list_request")
@@ -493,5 +496,50 @@ void create_group(vector<string>clientRequest)
     cout<<"Group already exits"<<endl;
     cout<<"Try creating another group again"<<endl;
    }
+  
+}
+
+void join_group(vector<string>clientRequest)
+{
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="join_group;"+clientRequest[1]+";"+current_user;
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char status[]={0};
+   int valRead=read( s_des , status, sizeof(status));
+   if(status[0]=='1')
+   {
+    cout<<current_user<<"  joined "<< clientRequest[1]<<" group succesfully"<<endl;
+    writeLog(current_user+" joined"+ clientRequest[1]+" group succesfully ");
+   }else if(status[0] == '2'){
+    cout<<current_user<<"is already part Group "<<clientRequest[1]<<endl;
+
+   }
+   else
+   {
+    cout<<"Could not join the group!! Try again with valid group"<<endl;
+
+  }
+  
+}
+
+void leave_group(vector<string>clientRequest)
+{
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="leave_group;"+clientRequest[1]+";"+current_user;
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char status[]={0};
+   int valRead=read( s_des , status, sizeof(status));
+   if(status[0]=='1')
+   {
+    cout<<current_user<<"  Left "<< clientRequest[1]<<"  group succesfully"<<endl;
+    writeLog(current_user+" left "+ clientRequest[1]+" group succesfully ");
+   }
+   else
+   {
+    cout<<"Could not leave the group!! Try again with valid group"<<endl;
+
+  }
   
 }

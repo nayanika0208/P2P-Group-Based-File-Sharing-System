@@ -1,10 +1,23 @@
-Oct 29 11:46:29 : Processed Arguments
-Oct 29 11:46:29 : Socket created successfully.
-Oct 29 11:46:29 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
-Oct 29 11:46:29 : server creation error
-Oct 29 11:46:34 : Socket created successfully.
-Oct 29 11:46:34 : Connected with sock =  4
-Oct 29 11:46:34 : nanoLogged in successfully
-Oct 29 11:46:43 : Socket created successfully.
-Oct 29 11:46:43 : Connected with sock =  5
-Oct 29 11:46:43 : nano created nan group succesfully 
+Oct 29 13:45:46 : Processed Arguments
+Oct 29 13:45:46 : Socket created successfully.
+Oct 29 13:45:46 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
+Oct 29 13:45:46 : server creation error
+Oct 29 13:45:52 : Socket created successfully.
+Oct 29 13:45:52 : Connected with sock =  4
+Oct 29 13:45:52 : nanoLogged in successfully
+Oct 29 13:46:02 : Socket created successfully.
+Oct 29 13:46:02 : Connected with sock =  5
+Oct 29 13:46:02 : nano created new group succesfully 
+Oct 29 13:46:12 : Socket created successfully.
+Oct 29 13:46:12 : Connected with sock =  5
+Oct 29 13:46:57 : Socket created successfully.
+Oct 29 13:46:57 : Connected with sock =  6
+Oct 29 13:47:04 : Socket created successfully.
+Oct 29 13:47:04 : Connected with sock =  7
+Oct 29 13:47:04 : medLogged in successfully
+Oct 29 13:47:15 : Socket created successfully.
+Oct 29 13:47:15 : Connected with sock =  8
+Oct 29 13:47:15 : med joinednew group succesfully 
+Oct 29 13:47:52 : Socket created successfully.
+Oct 29 13:47:52 : Connected with sock =  9
+Oct 29 13:47:52 : med left new group succesfully 
