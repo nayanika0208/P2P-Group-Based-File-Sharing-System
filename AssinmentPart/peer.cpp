@@ -25,7 +25,7 @@ using namespace std;
 
 string current_user;
 string current_group;
-
+bool isLoggedIn=false;
 
 sem_t m;
 string clientIPort;
@@ -44,7 +44,7 @@ string SEP = "|*|";
 vector<thread> threadVector;
 int threadCount;
 
-bool islogedin=false;
+
 
 vector<string>StringParser(string s,char del);
 void process_args(char *argv[]);
@@ -53,7 +53,11 @@ void writeLog(string message);
 void serverequest(int newsocketdes,string ip,int port);
 void peerAsServer();
 int socket_creation_to_server(string ip_address, int port_address);
-void create_user(vector<string > requestParse);
+void create_user(vector<string > clientRequest);
+void login(vector<string > clientRequest);
+void create_group(vector<string>clientRequest);
+
+
 
 int main(int argc,char ** argv)
 {
@@ -76,15 +80,15 @@ int main(int argc,char ** argv)
      string request;
    	  getline(cin,request);
       cout<<request<<endl;
-      vector<string>requestParse=StringParser(request,' ');
-      string command=requestParse[0];
+      vector<string>clientRequest=StringParser(request,' ');
+      string command=clientRequest[0];
       cout<<command<<endl;
    
 
       if(command=="create_user")
       {
    
-            if(requestParse.size()!=3)
+            if(clientRequest.size()!=3)
             {
                 cout<<" invalid arguments for create_user "<<endl;
                 continue;
@@ -92,48 +96,43 @@ int main(int argc,char ** argv)
             else
             {
 
-            threadVector.push_back(thread(create_user,requestParse));
+            threadVector.push_back(thread(create_user,clientRequest));
             	
          }
       }
       else if(command=="login")
       {
 
-      	  cout<<" Not imlemented yet " <<command<<endl;
-      		// cout<<"In line 304"<<endl;
+            if(clientRequest.size()!=3)
+            {
+            	cout<<"invalid arguments for login"<<endl;
+               continue;
+            }
+            else
+            {
 
-        //     if(requestParse.size()!=3)
-        //     {
-        //     	cout<<"error in input"<<requestParse.size()<<endl;
-        //         goto l2;
-        //     }
-        //     else
-        //     {
-        //     	// cout<<"In line 313"<<endl;
-        //     	threadVector.push_back(thread(login,requestParse[1],requestParse[2]));
+            	
+            	threadVector.push_back(thread(login,clientRequest));
 
-        //     }
+            }
       }
       else if(command=="create_group")
       {
-      	cout<<" Not imlemented yet " <<command<<endl;
-
-      		// cout<<"In line 319"<<endl;
-
-    //   	    if(!islogedin)
- 		 //    {
- 			// cout<<"Please enter the login cred to enter into the system"<<endl;
- 			// goto l2;
- 		 //    }
-    //         if(requestParse.size()!=2)
-    //         {
-    //         	cout<<"Enter the valid argument"<<endl;
-    //            goto l2;
-    //         }
-    //         else
-    //         {
-    //         	threadVector.push_back(thread(create_group,requestParse[1]));
-    //         }
+      	
+      	    if(!isLoggedIn)
+       		    {
+       		     	cout<<"Please first login into the system"<<endl;
+       			
+       		    }
+            if(clientRequest.size()!=2)
+            {
+            	cout<<"Invalid arguments for creating group"<<endl;
+               
+            }
+            else
+            {
+            	threadVector.push_back(thread(create_group,clientRequest));
+            }
       }
       else if(command=="join_group")
       {
@@ -146,14 +145,14 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //    if(requestParse.size()!=2)
+         //    if(clientRequest.size()!=2)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
          //    }
          //    else
          //    {
-         //       threadVector.push_back(thread(join_group,requestParse[1]));
+         //       threadVector.push_back(thread(join_group,clientRequest[1]));
          //    }
       }
       else if(command=="leave_group")
@@ -165,14 +164,14 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //    if(requestParse.size()!=2)
+         //    if(clientRequest.size()!=2)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
          //    }
          //    else
          //    {
-         //       threadVector.push_back(thread(leave_group,requestParse[1]));
+         //       threadVector.push_back(thread(leave_group,clientRequest[1]));
          //    }
       	cout<<" Not imlemented yet " <<command<<endl;
 
@@ -201,7 +200,7 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //  if(requestParse.size()!=1)
+         //  if(clientRequest.size()!=1)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
@@ -222,14 +221,14 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //    if(requestParse.size()!=2)
+         //    if(clientRequest.size()!=2)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
          //    }
          //    else
          //    {
-         //       threadVector.push_back(thread(list_files,requestParse[1]));
+         //       threadVector.push_back(thread(list_files,clientRequest[1]));
          //    }
       	cout<<" Not imlemented yet " <<command<<endl;
 
@@ -243,14 +242,14 @@ int main(int argc,char ** argv)
         //  cout<<"Please enter the login cred to enter into the system"<<endl;
         //  goto l2;
         //   }
-        //   if(requestParse.size()!=3)
+        //   if(clientRequest.size()!=3)
         //     {
         //        cout<<"Enter the valid argument"<<endl;
         //        goto l2;
         //     }
         //     else {
-        //        string group_id=requestParse[1];
-        //        string FileId=requestParse[2];
+        //        string group_id=clientRequest[1];
+        //        string FileId=clientRequest[2];
         //        // cout<<group_id<<" "<<FileId<<endl;
         //   threadVector.push_back(thread(upload_file,group_id,FileId));
 
@@ -268,15 +267,15 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //  if(requestParse.size()!=4)
+         //  if(clientRequest.size()!=4)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
          //    }
          //    else {
-         //       string group_id=requestParse[1];
-         //       string FileId=requestParse[2];
-         //       string Filepath=requestParse[3];
+         //       string group_id=clientRequest[1];
+         //       string FileId=clientRequest[2];
+         //       string Filepath=clientRequest[3];
          //  threadVector.push_back(thread(download_file,group_id,FileId,Filepath));
 
          //    }
@@ -292,7 +291,7 @@ int main(int argc,char ** argv)
          // cout<<"Please enter the login cred to enter into the system"<<endl;
          // goto l2;
          //  }
-         //    if(requestParse.size()!=1)
+         //    if(clientRequest.size()!=1)
          //    {
          //       cout<<"Enter the valid argument"<<endl;
          //       goto l2;
@@ -434,13 +433,13 @@ void peerAsServer(){
 
 }
 
-void create_user(vector<string > requestParse){
+void create_user(vector<string > clientRequest){
            int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
-           string token="create_user";
-           token+=";";
-           token+=requestParse[1];
-           token+=";";
-           token+=requestParse[2];
+           string token="create_user;"+clientRequest[1]+";"+clientRequest[2];
+           // token+=";";
+           // token+=clientRequest[1];
+           // token+=";";
+           // token+=clientRequest[2];
            send(s_des,token.c_str(),strlen(token.c_str()),0);
             char status[]={0};
             int valRead=read( s_des , status, sizeof(status));
@@ -453,4 +452,46 @@ void create_user(vector<string > requestParse){
             }
             
             
+}
+
+void login(vector<string > clientRequest)
+{
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="login;"+clientRequest[1]+";"+clientRequest[2];
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+
+
+   char status[]={0};
+    int valRead=read( s_des , status, sizeof(status));
+    if(status[0]=='1'){
+       
+           isLoggedIn=true;
+          current_user=clientRequest[1];
+          cout<<clientRequest[1]<<" Logged in successfully"<<endl;
+          writeLog(clientRequest[1]+"Logged in successfully");
+        }else{
+         cout<<"Wrong Credentials"<<endl;
+         writeLog("Login failed"); 
+     }
+}
+
+void create_group(vector<string>clientRequest)
+{
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="create_group;"+clientRequest[1]+";"+current_user;
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char status[]={0};
+   int valRead=read( s_des , status, sizeof(status));
+   if(status[0]=='1')
+   {
+    cout<<clientRequest[1]<<"Group created succesfully"<<endl;
+    writeLog(current_user+" created "+ clientRequest[1]+" group succesfully ");
+   }
+   else
+   {
+    cout<<"Group already exits"<<endl;
+    cout<<"Try creating another group again"<<endl;
+   }
+  
 }

@@ -30,6 +30,7 @@ string SEP = "|*|";
 vector<thread> threadVector;
 int thread_count;
 unordered_map<string,string>userDetails;
+unordered_map<string,set<string> >groupInfo;
 
 vector<string>StringParser(string s,char del);
 void process_args(char *argv[]);
@@ -37,7 +38,8 @@ fstream getLogFile();
 void writeLog(string message);
 void peerService(int clientSocketDes,string ip,int port);
 void createNewUser(string userId,string password,int clientSocketDes);
-
+void login(string userId,string password,int clientSocketDes);
+void create_group(string userId,string groupId,int clientSocketDes);
 int main(int argc, char *argv[]){
 
 	if (argc != 3)
@@ -193,6 +195,24 @@ void createNewUser(string userId,string password,int clientSocketDes){
 	close(clientSocketDes);
 }
 
+void login(string userId,string password,int clientSocketDes){
+
+	if(userDetails.find(userId)!=userDetails.end()&&(userDetails[userId]==password))
+	{
+	  char  status[]="1";
+	  
+	  send(clientSocketDes,status,sizeof(status),0);
+	}
+	else
+	{
+		char  status[]="0";
+	    send(clientSocketDes,status,sizeof(status),0);
+
+	}
+	close(clientSocketDes);
+	
+}
+
 void peerService(int clientSocketDes,string ip,int port)
 {
 	cout<<" Okay serve request is working "<<endl;
@@ -209,17 +229,25 @@ void peerService(int clientSocketDes,string ip,int port)
 	   string pass=requestToServe[2];
        createNewUser(user_id,pass,clientSocketDes);
 	}
+	else if(myCommand=="login")
+	{
+       string user_id=requestToServe[1];
+       string pass=requestToServe[2];
+       login(user_id,pass,clientSocketDes);
+	}
+	else if(myCommand=="create_group")
+	{
+      string group_id=requestToServe[1];
+      string user_id=requestToServe[2];
+      create_group(user_id,group_id,clientSocketDes);
+	}
 	else if(myCommand=="join_group")
 	{
       // string group_id=requestToServe[1];
       // string user_id=requestToServe[2];
       // join_group(clientSocketDes,group_id,user_id);
 	}
-	else if(myCommand=="create_group")
-	{
-      // string group_id=requestToServe[1];
-      // create_group(clientSocketDes,group_id);
-	}
+	
 	else if(myCommand=="upload_file")
 	{
 	  // cout<<"in line 184"<<endl;
@@ -263,12 +291,7 @@ void peerService(int clientSocketDes,string ip,int port)
  //      string group_id=requestToServe[1];
  //      list_files(clientSocketDes,group_id);
 	}
-	else if(myCommand=="login")
-	{
-       // string user_id=requestToServe[1];
-       // string pass=requestToServe[2];
-       // login(clientSocketDes,user_id,pass);
-	}
+	
 	else if(myCommand=="logout")
 	{
        // string IPport=requestToServe[1];
@@ -277,4 +300,23 @@ void peerService(int clientSocketDes,string ip,int port)
 	}
 	
 
+
+}
+
+void create_group(string userId,string groupId,int clientSocketDes){
+
+	if(groupInfo.find(groupId)!=groupInfo.end())
+	{
+	  char status[]="0";
+	  send(clientSocketDes,status,sizeof(status),0);
+	}
+	else
+	{
+
+		char status[]="1";
+		groupInfo[groupId].insert(userId);
+	    send(clientSocketDes,status,sizeof(status),0);
+
+	}
+	close(clientSocketDes);
 }
