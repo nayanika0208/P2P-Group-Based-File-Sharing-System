@@ -1,23 +1,21 @@
-Oct 29 13:45:46 : Processed Arguments
-Oct 29 13:45:46 : Socket created successfully.
-Oct 29 13:45:46 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
-Oct 29 13:45:46 : server creation error
-Oct 29 13:45:52 : Socket created successfully.
-Oct 29 13:45:52 : Connected with sock =  4
-Oct 29 13:45:52 : nanoLogged in successfully
-Oct 29 13:46:02 : Socket created successfully.
-Oct 29 13:46:02 : Connected with sock =  5
-Oct 29 13:46:02 : nano created new group succesfully 
-Oct 29 13:46:12 : Socket created successfully.
-Oct 29 13:46:12 : Connected with sock =  5
-Oct 29 13:46:57 : Socket created successfully.
-Oct 29 13:46:57 : Connected with sock =  6
-Oct 29 13:47:04 : Socket created successfully.
-Oct 29 13:47:04 : Connected with sock =  7
-Oct 29 13:47:04 : medLogged in successfully
-Oct 29 13:47:15 : Socket created successfully.
-Oct 29 13:47:15 : Connected with sock =  8
-Oct 29 13:47:15 : med joinednew group succesfully 
-Oct 29 13:47:52 : Socket created successfully.
-Oct 29 13:47:52 : Connected with sock =  9
-Oct 29 13:47:52 : med left new group succesfully 
+Oct 31 20:53:53 : Processed Arguments
+Oct 31 20:53:53 : Socket created successfully.
+Oct 31 20:53:53 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
+Oct 31 20:53:53 : server creation error
+Oct 31 20:53:57 : Socket created successfully.
+Oct 31 20:53:57 : Connected with sock =  4
+Oct 31 20:53:57 : medLogged in successfully
+Oct 31 20:54:14 : Socket created successfully.
+Oct 31 20:54:14 : Connected with sock =  5
+Oct 31 20:54:27 : Socket created successfully.
+Oct 31 20:54:27 : Connected with sock =  6
+Oct 31 20:55:43 : Socket created successfully.
+Oct 31 20:55:43 : Connected with sock =  7
+Oct 31 20:55:43 : nano left n group succesfully 
+Oct 31 20:55:49 : Socket created successfully.
+Oct 31 20:55:49 : Connected with sock =  8
+Oct 31 20:55:55 : Socket created successfully.
+Oct 31 20:55:55 : Connected with sock =  9
+Oct 31 20:55:55 : nano left m group succesfully 
+Oct 31 20:55:59 : Socket created successfully.
+Oct 31 20:55:59 : Connected with sock =  10

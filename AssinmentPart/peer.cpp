@@ -22,6 +22,8 @@
 using namespace std;
 
 
+#define BUFFER_SIZE 10240
+#define BACK 2500
 
 string current_user;
 string current_group;
@@ -57,10 +59,12 @@ void create_user(vector<string > clientRequest);
 void login(vector<string > clientRequest);
 void create_group(vector<string>clientRequest);
 void join_group(vector<string>clientRequest);
+void list_requests(vector<string > clientRequest);
+void accept_request(vector<string>clientRequest);
 
 void leave_group(vector<string>clientRequest);
 
-
+void list_groups();
 
 int main(int argc,char ** argv)
 {
@@ -179,41 +183,56 @@ int main(int argc,char ** argv)
       	
 
       }
-      else if(command=="list_request")
+      else if(command=="requests")
       {
-      // {
-      //   cout<<"Not Inplemented "<<endl;
-      //  goto l2;
-      	cout<<" Not imlemented yet " <<command<<endl;
+      
+      	 if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+                   }
+            if(clientRequest.size()!=3)
+            {
+               cout<<"Invalid arguments for listing requets"<<endl;
+               
+            }
+            else
+            {
+               threadVector.push_back(thread(list_requests,clientRequest));
+            }
 
       }
       else if(command=="accept_request")
       {
-       // cout<<"Not Inplemented "<<endl;
-       // goto l2;
-      	cout<<" Not imlemented yet " <<command<<endl;
+         if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+                   }
+       if(clientRequest.size()!=3)
+            {
+               cout<<"Enter the valid argument"<<endl;
+              
+            }
+            else {
+          threadVector.push_back(thread(accept_request,clientRequest));
+
+           }
 
       }
       else if(command=="list_groups")
       {
-         //    cout<<"In line 358"<<endl;
+            
+          if(clientRequest.size()!=1)
+            {
+               cout<<"Enter the valid argument"<<endl;
+              
+            }
+            else {
+          threadVector.push_back(thread(list_groups));
 
-         //     if(!islogedin)
-         //  {
-         // cout<<"Please enter the login cred to enter into the system"<<endl;
-         // goto l2;
-         //  }
-         //  if(clientRequest.size()!=1)
-         //    {
-         //       cout<<"Enter the valid argument"<<endl;
-         //       goto l2;
-         //    }
-         //    else {
-         //  threadVector.push_back(thread(list_groups));
-
-         //    }
-      	cout<<" Not imlemented yet " <<command<<endl;
-
+           }
+      	
       }
       else if(command=="list_files")
       {
@@ -439,10 +458,7 @@ void peerAsServer(){
 void create_user(vector<string > clientRequest){
            int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
            string token="create_user;"+clientRequest[1]+";"+clientRequest[2];
-           // token+=";";
-           // token+=clientRequest[1];
-           // token+=";";
-           // token+=clientRequest[2];
+          
            send(s_des,token.c_str(),strlen(token.c_str()),0);
             char status[]={0};
             int valRead=read( s_des , status, sizeof(status));
@@ -460,7 +476,8 @@ void create_user(vector<string > clientRequest){
 void login(vector<string > clientRequest)
 {
    int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
-   string token="login;"+clientRequest[1]+";"+clientRequest[2];
+   string token="login;"+clientRequest[1]+";"+clientRequest[2]+";"+serverip+";"+serverport;
+   cout<<token<<endl;
    send(s_des,token.c_str(),strlen(token.c_str()),0);
 
 
@@ -476,6 +493,28 @@ void login(vector<string > clientRequest)
          cout<<"Wrong Credentials"<<endl;
          writeLog("Login failed"); 
      }
+}
+void list_requests(vector<string > clientRequest)
+{
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="list_requests;"+clientRequest[2]+";"+current_user;
+   
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+
+
+  
+char buffer[BUFFER_SIZE]={0};
+   int valRead=read( s_des ,buffer, sizeof(buffer));
+   string buff(buffer);
+   vector<string>req=StringParser(buff,';');
+   if(req.size() == 0){
+    cout<<" No requests in group"<<endl;
+   }else{
+    cout<<"Requests in group :"<<endl;
+    for(int i=0;i<req.size();i++){
+      cout<<req[i]<<endl;
+    }
+  }
 }
 
 void create_group(vector<string>clientRequest)
@@ -509,12 +548,14 @@ void join_group(vector<string>clientRequest)
    int valRead=read( s_des , status, sizeof(status));
    if(status[0]=='1')
    {
-    cout<<current_user<<"  joined "<< clientRequest[1]<<" group succesfully"<<endl;
-    writeLog(current_user+" joined"+ clientRequest[1]+" group succesfully ");
+    cout<<current_user<<" requested to join  "<< clientRequest[1]<<endl;
+    writeLog(current_user+" requested to join  "+ clientRequest[1]);
    }else if(status[0] == '2'){
     cout<<current_user<<"is already part Group "<<clientRequest[1]<<endl;
 
    }
+
+   
    else
    {
     cout<<"Could not join the group!! Try again with valid group"<<endl;
@@ -541,5 +582,44 @@ void leave_group(vector<string>clientRequest)
     cout<<"Could not leave the group!! Try again with valid group"<<endl;
 
   }
+  
+}
+
+void list_groups()
+{
+  cout<<" list group is working" <<endl;
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="list_groups;";
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char buffer[BUFFER_SIZE]={0};
+   int valRead=read( s_des ,buffer, sizeof(buffer));
+   string buff(buffer);
+   vector<string>grouplist=StringParser(buff,';');
+   if(grouplist.size() == 0){
+    cout<<" No groups in the network "<<endl;
+   }else{
+    cout<<"Groups in network are :"<<endl;
+    for(int i=0;i<grouplist.size();i++){
+      cout<<grouplist[i]<<endl;
+    }
+   }
+  
+
+
+}
+
+void accept_request(vector<string>clientRequest)
+{
+  
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="accept_request;"+clientRequest[1]+";"+clientRequest[2]+";"+current_user;
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char buffer[BUFFER_SIZE]={0};
+   int valRead=read( s_des ,buffer, sizeof(buffer));
+   string buff(buffer);
+   cout<<buffer<<endl;
+
   
 }

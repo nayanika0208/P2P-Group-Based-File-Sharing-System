@@ -16,8 +16,43 @@ using namespace std;
 #define BUFFER_SIZE 10240
 #define BACK 2500
 
+struct userInfo{
+	string userId;
+	string password;
+	string currentIp;
+	int portno;
+	bool isLoggedIn=false;
+};
 
-string tracker_info_path,log_file="./mytrackerLog";
+struct groupInfo{
+
+	 string group_id;
+	 string ownwerId;
+
+};
+
+
+struct file_info
+{
+	string fileName; //assuming file name will be unique
+	int filesize;
+	string fullFileSha;
+	vector<string> chunkWiseSha;
+	int noOfChunks;
+};
+
+
+unordered_map<string,struct userInfo >userToUserInfo;
+unordered_map<string,struct file_info>fileToFIleInfo;
+unordered_map<string,struct groupInfo >GroupToGroupInfo;
+
+unordered_map<string,set<string> >pendingInvites;
+unordered_map<string,set<string> >usersIngroup;
+unordered_map<string,set<string> >FilesInGroup;
+unordered_map< string,set<string > > seederList;
+
+
+string tracker_info_path,log_file="./mytrackerLog1";
 bool startingLogFile=true;
 int tracker_no;
 vector<string>IP_and_port_of_Trackers;
@@ -29,8 +64,7 @@ mutex seedfile_mutex, logfile_mutex;
 string SEP = "|*|";
 vector<thread> threadVector;
 int thread_count;
-unordered_map<string,string>userDetails;
-unordered_map<string,set<string> >groupInfo;
+
 
 vector<string>StringParser(string s,char del);
 void process_args(char *argv[]);
@@ -38,10 +72,13 @@ fstream getLogFile();
 void writeLog(string message);
 void peerService(int clientSocketDes,string ip,int port);
 void createNewUser(string userId,string password,int clientSocketDes);
-void login(string userId,string password,int clientSocketDes);
+void login(string userId,string password,string userip,int userport,int clientSocketDes);
 void createGroup(string userId,string groupId,int clientSocketDes);
 void join_group(string groupId,string userId,int clientSocketDes);
 void  leave_group(string groupId,string userId,int clientSocketDes);
+void  list_groups(int clientSocketDes);
+void  accept_requests(int clientSocketDes,string groupId,string userId,string currentUser);
+void  list_requests(int clientSocketDes,string groupId,string currentUser);
 
 
 int main(int argc, char *argv[]){
@@ -53,6 +90,7 @@ int main(int argc, char *argv[]){
         exit(1);
     }
     else{
+    	cout<<" came here1 "<<endl;
     	process_args(argv);
     	writeLog("Processed the agruments.");
 
@@ -136,14 +174,17 @@ vector<string>StringParser(string s,char del)
 
 void process_args(char *argv[])
 {
+	    
         string tracker_info_path=argv[1];
 	    tracker_no=stoi(argv[2]);
 	    cout<<"tracker_no="<<tracker_no<<endl;	   
-	    fstream serverfilestream(tracker_info_path,ios::in);	    
+	    fstream serverfilestream(tracker_info_path,ios::in);
+	     
 	    string temp;
 	    while(getline(serverfilestream,temp,'\n'))
 	    {
 	    	IP_and_port_of_Trackers.push_back(temp);
+	    	
 	    }
 	    vector<string>IPort;
 	    IPort=StringParser(IP_and_port_of_Trackers[0],':');
@@ -152,6 +193,7 @@ void process_args(char *argv[])
 	 	IPort=StringParser(IP_and_port_of_Trackers[1],':');
 	 	tracker2_ip=IPort[0];
 	 	tracker2_port=IPort[1];
+
 }
 
 fstream getLogFile()
@@ -182,7 +224,7 @@ void writeLog(string message)
 
 void createNewUser(string userId,string password,int clientSocketDes){
 
-	if(userDetails.find(userId)!=userDetails.end())
+	if(userToUserInfo.find(userId)!=userToUserInfo.end())
 	{
 	  char status[]="0";
 	  int s=sizeof(status);
@@ -191,7 +233,12 @@ void createNewUser(string userId,string password,int clientSocketDes){
 	else
 	{
 		char status[]="1";
-		userDetails[userId]=password;
+		userInfo user;
+		user.userId=userId;
+		user.password=password;
+		userToUserInfo[userId]=user;
+		cout<<userToUserInfo[userId].userId<<endl;
+		cout<<userToUserInfo[userId].password<<endl;
 		int s=sizeof(status);
 	    send(clientSocketDes,status,s,0);
 
@@ -199,10 +246,14 @@ void createNewUser(string userId,string password,int clientSocketDes){
 	close(clientSocketDes);
 }
 
-void login(string userId,string password,int clientSocketDes){
+void login(string userId,string password,string userip,int userport,int clientSocketDes){
 
-	if(userDetails.find(userId)!=userDetails.end()&&(userDetails[userId]==password))
+	if(userToUserInfo.find(userId)!=userToUserInfo.end()&&(userToUserInfo[userId].password==password))
 	{
+		cout<<" loging in "<<userId <<"   "<<password<<endl;
+	  userToUserInfo[userId].currentIp=userip;
+	   userToUserInfo[userId].portno=userport;
+	   userToUserInfo[userId].isLoggedIn=true;
 	  char  status[]="1";
 	  
 	  send(clientSocketDes,status,sizeof(status),0);
@@ -237,7 +288,9 @@ void peerService(int clientSocketDes,string ip,int port)
 	{
        string user_id=requestToServe[1];
        string pass=requestToServe[2];
-       login(user_id,pass,clientSocketDes);
+       string userip=requestToServe[3];
+       int userport=stoi(requestToServe[4]);
+       login(user_id,pass,userip,userport,clientSocketDes);
 	}
 	else if(myCommand=="create_group")
 	{
@@ -283,17 +336,23 @@ void peerService(int clientSocketDes,string ip,int port)
 	}
 	else if(myCommand=="list_requests")
 	{
+		 string group_id=requestToServe[1];
+		  string curr=requestToServe[2];
+		 list_requests(clientSocketDes,group_id,curr);
+
       
 	}
 	else if(myCommand=="list_groups")
 	{
-		// list_groups(clientSocketDes);
+		list_groups(clientSocketDes);
 
 	}
-	else if(myCommand=="list_files")
+	else if(myCommand=="accept_request")
 	 {
- //      string group_id=requestToServe[1];
- //      list_files(clientSocketDes,group_id);
+      string group_id=requestToServe[1];
+      string user_id=requestToServe[2];
+      string curr=requestToServe[3];
+      accept_requests(clientSocketDes,group_id,user_id,curr);
 	}
 	
 	else if(myCommand=="logout")
@@ -309,7 +368,7 @@ void peerService(int clientSocketDes,string ip,int port)
 
 void createGroup(string userId,string groupId,int clientSocketDes){
 
-	if(groupInfo.find(groupId)!=groupInfo.end())
+	if(GroupToGroupInfo.find(groupId)!=GroupToGroupInfo.end())
 	{
 	  char status[]="0";
 	  send(clientSocketDes,status,sizeof(status),0);
@@ -318,7 +377,12 @@ void createGroup(string userId,string groupId,int clientSocketDes){
 	{
 
 		char status[]="1";
-		groupInfo[groupId].insert(userId);
+		groupInfo grp;
+		grp.group_id=groupId;
+		grp.ownwerId=userId;
+		GroupToGroupInfo[groupId]=grp;
+		usersIngroup[groupId].insert(userId);
+
 	    send(clientSocketDes,status,sizeof(status),0);
 
 	}
@@ -327,14 +391,14 @@ void createGroup(string userId,string groupId,int clientSocketDes){
 
 void join_group(string groupId,string userId,int clientSocketDes){
 
-    if(groupInfo.find(groupId)!=groupInfo.end())
+    if(usersIngroup.find(groupId)!=usersIngroup.end())
 	{
 		
-		 if(groupInfo[groupId].find(userId)!=groupInfo[groupId].end()){
+		 if(usersIngroup[groupId].find(userId)!=usersIngroup[groupId].end()){
 		 	char status[]="2";
 		 	send(clientSocketDes,status,sizeof(status),0);
 		 }else{
-		 	groupInfo[groupId].insert(userId);
+		 	pendingInvites[groupId].insert(userId);
 		 	char status[]="1";
 		 	send(clientSocketDes,status,sizeof(status),0);
 		 }	    
@@ -355,14 +419,25 @@ void join_group(string groupId,string userId,int clientSocketDes){
 void  leave_group(string groupId,string userId,int clientSocketDes)
 {
 	
-    if(groupInfo.find(groupId)!=groupInfo.end())
-	{
-		
-		 if(groupInfo[groupId].find(userId)!=groupInfo[groupId].end()){
+    if(GroupToGroupInfo.find(groupId)!=GroupToGroupInfo.end())
+	{   
+		if(GroupToGroupInfo[groupId].ownwerId == userId){
+			GroupToGroupInfo.erase(groupId);
+			pendingInvites.erase(groupId);
+             usersIngroup.erase(groupId);
+             FilesInGroup.erase(groupId);
+             char status[]="1";
+             send(clientSocketDes,status,sizeof(status),0);
+
+		}else{
+			 if(usersIngroup[groupId].find(userId)!=usersIngroup[groupId].end()){
 		 	char status[]="1";
-		 	groupInfo[groupId].erase(userId);
+		 	usersIngroup[groupId].erase(userId);
 		 	send(clientSocketDes,status,sizeof(status),0);
-		 }   
+		 } 
+		}
+		
+		  
 
 	}
 	else
@@ -374,5 +449,61 @@ void  leave_group(string groupId,string userId,int clientSocketDes)
 	}
 	close(clientSocketDes);
 
+	
+}
+
+void  list_groups(int clientSocketDes)
+{
+	string info="";
+	for(auto &i:GroupToGroupInfo)
+	{
+      info+=i.first;
+      info+=";";
+	}
+	send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+	close(clientSocketDes);
+	
+}
+void  accept_requests(int clientSocketDes,string groupId,string userId,string currentUser)
+{
+
+	if(currentUser != GroupToGroupInfo[groupId].ownwerId){
+		string info="You are not the owner of this group ";
+		send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+	}else{
+		pendingInvites[groupId].erase(userId);
+		usersIngroup[groupId].insert(userId);
+		string info=userId+"is now a part of group "+groupId;
+		send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+	}
+	
+	
+	close(clientSocketDes);
+	
+}
+void  list_requests(int clientSocketDes,string groupId,string currentUser)
+{
+	if(currentUser != GroupToGroupInfo[groupId].ownwerId){
+		string info="You are not the owner of this group ";
+		send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+	}else{
+		string info="";
+		if(pendingInvites.find(groupId) == pendingInvites.end()){
+			send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+		}else{
+			for(auto i:pendingInvites[groupId])
+			{
+		      info+= i;
+		      info+=";";
+		    
+			}
+			send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+		
+		
+		
+		}
+
+	}
+	close(clientSocketDes);
 	
 }
