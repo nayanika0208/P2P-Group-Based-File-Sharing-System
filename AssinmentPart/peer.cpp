@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include<bits/stdc++.h>
@@ -11,12 +12,20 @@
 #include <signal.h>
 #include<math.h>
 #include<cstring>
-#include <unistd.h>
 #include <openssl/sha.h>
 #include <thread>
 #include <semaphore.h>
 #include <errno.h>
 #include <string.h>
+#include <fcntl.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <dirent.h>
+#include <termios.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <pwd.h>
+#include <grp.h>
 
 
 using namespace std;
@@ -61,10 +70,14 @@ void create_group(vector<string>clientRequest);
 void join_group(vector<string>clientRequest);
 void list_requests(vector<string > clientRequest);
 void accept_request(vector<string>clientRequest);
-
+void list_files(vector<string>clientRequest);
 void leave_group(vector<string>clientRequest);
-
+size_t get_file_size(string f_name);
 void list_groups();
+int isFileExist(string path);
+void upload_file(vector<string>clientRequest);
+string get_SHA1(char *data, int chnk_size);
+
 
 int main(int argc,char ** argv)
 {
@@ -222,6 +235,11 @@ int main(int argc,char ** argv)
       }
       else if(command=="list_groups")
       {
+        if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+                   }
             
           if(clientRequest.size()!=1)
             {
@@ -236,49 +254,46 @@ int main(int argc,char ** argv)
       }
       else if(command=="list_files")
       {
-         // cout<<"In line 941 "<<endl;
-
-         //     if(!islogedin)
-         //  {
-         // cout<<"Please enter the login cred to enter into the system"<<endl;
-         // goto l2;
-         //  }
-         //    if(clientRequest.size()!=2)
-         //    {
-         //       cout<<"Enter the valid argument"<<endl;
-         //       goto l2;
-         //    }
-         //    else
-         //    {
-         //       threadVector.push_back(thread(list_files,clientRequest[1]));
-         //    }
-      	cout<<" Not imlemented yet " <<command<<endl;
+         if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+            }
+          
+            if(clientRequest.size()!=2)
+            {
+               cout<<"Enter the valid argument"<<endl;
+              
+            }
+            else
+            {
+               threadVector.push_back(thread(list_files,clientRequest));
+            }
+      	
 
       }
       else if(command=="upload_file")
       {
-        // cout<<"In line 697"<<endl;
+       
 
-        //      if(!islogedin)
-        //   {
-        //  cout<<"Please enter the login cred to enter into the system"<<endl;
-        //  goto l2;
-        //   }
-        //   if(clientRequest.size()!=3)
-        //     {
-        //        cout<<"Enter the valid argument"<<endl;
-        //        goto l2;
-        //     }
-        //     else {
-        //        string group_id=clientRequest[1];
-        //        string FileId=clientRequest[2];
-        //        // cout<<group_id<<" "<<FileId<<endl;
-        //   threadVector.push_back(thread(upload_file,group_id,FileId));
+         if(!isLoggedIn)
+          {
+               cout<<"Please first login into the system"<<endl;
+               continue;
+         }
+          if(clientRequest.size()!=3)
+            {
+               cout<<"Enter the valid argument"<<endl;
+              
+            }
+            else {
+             
+          threadVector.push_back(thread(upload_file,clientRequest));
 
-        //     }
-        cout<<" Not imlemented yet " <<command<<endl;
+        
 
       }
+    }
       else if(command=="download_file")
       {
         
@@ -622,4 +637,163 @@ void accept_request(vector<string>clientRequest)
    cout<<buffer<<endl;
 
   
+}
+
+void list_files(vector<string>clientRequest)
+{
+  
+   int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="list_files;"+clientRequest[1];
+   send(s_des,token.c_str(),strlen(token.c_str()),0);
+   
+   char buffer[BUFFER_SIZE]={0};
+   int valRead=read( s_des ,buffer, sizeof(buffer));
+    string buff(buffer);
+   vector<string>fileList=StringParser(buff,';');
+  
+    if(fileList.size() == 0){
+    cout<<" No file in the group "<<endl;
+   }else{
+    cout<<"Files in the group are:"<<endl;
+    for(int i=0;i<fileList.size();i++){
+      cout<<fileList[i]<<endl;
+    }
+   }
+
+  
+}
+
+size_t get_file_size(string f_name)
+{
+    struct stat sb;
+    int rc = stat(f_name.c_str(), &sb);
+    return rc == 0 ? sb.st_size : -1;
+}
+
+string get_SHA1(char *data, int chnk_size)
+{
+    unsigned char md[20];
+    unsigned char buf[40];
+    SHA1((unsigned char *)data, chnk_size, md);
+    for (int i = 0; i < 20; i++)
+    {
+        sprintf((char *)&(buf[i * 2]), "%02x", md[i]);
+    }
+    string md_1((char *)buf);
+    return md_1;
+}
+
+
+// void mtorrent_generator(string f_name, string tor_name)
+// {
+//     string t_ip1 = tr1_ip;
+//     int t_port1 = tr1_port;
+//     string t_ip2 = tr2_ip;
+//     int t_port2 = tr2_port;
+
+//     ofstream mtorrent_file;
+//     ifstream input_file;
+
+//     input_file.open(f_name, ios::binary | ios::in);
+//     mtorrent_file.open(tor_name);
+
+
+//     mtorrent_file << t_ip1 << ":" << t_port1 << endl;
+//     mtorrent_file << t_ip2 << ":" << t_port2 << endl;
+//     mtorrent_file << f_name << endl; // CREATE FILENAME TO ABSOLUTE PATH
+//     mtorrent_file << f_size << endl;
+
+//     size_t chnk_size = 512 * 1024; //512KB
+
+//     unsigned long long s = f_size;
+//     if (s < chnk_size)
+//         chnk_size = s;
+//     char tmp[chnk_size];
+//     string final_hash;
+//     writeLog("Reading " + tor_name + " and creating mtorrent file.");
+//     while (input_file.read(tmp, chnk_size))
+//     {
+//         s -= chnk_size;
+//         string md_1 = get_SHA1(tmp, chnk_size);
+//         final_hash.append(md_1.substr(0, 20));
+//         if (s == 0)
+//             break;
+//         if (s < chnk_size)
+//             chnk_size = s;
+//     }
+//     mtorrent_file << final_hash << endl;
+
+//     writeLog(tor_name + " generated.");
+// }
+void upload_file(vector<string>clientRequest){
+  int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+
+  string filepath=clientRequest[1];
+ 
+  if(isFileExist(filepath)){
+      ifstream input_file;
+
+    size_t f_size = get_file_size(filepath);
+    input_file.open(filepath, ios::binary | ios::in);
+    size_t chnk_size = 512 * 1024; //512KB
+
+    vector<string>chunkHash;
+    unsigned long long chunks=0;
+    unsigned long long s = f_size;
+    if (s < chnk_size){
+       chnk_size = s;
+   
+    }
+       
+    char tmp[chnk_size];
+    string final_hash;
+   
+    while (input_file.read(tmp, chnk_size))
+    {
+        s -= chnk_size;
+        chunks+=1;
+        string md_1 = get_SHA1(tmp, chnk_size);
+        final_hash.append(md_1.substr(0, 20));
+        chunkHash.push_back(md_1.substr(0, 20));
+        if (s == 0)
+            break;
+        if (s < chnk_size)
+            chnk_size = s;
+    }
+
+    cout<<" final hash "<<final_hash<<endl;
+    for(int i=0;i<chunkHash.size();i++){
+      cout<<chunkHash[i]<<endl;
+    }
+
+    string token="upload_file;"+filepath+";"+clientRequest[2]+";"+current_user+";"+to_string(f_size)+";"+to_string(chunks)+";"+final_hash+";";
+
+    for(int i=0;i<chunkHash.size()-1;i++){
+      token+=chunkHash[i]+";";
+    }
+    token+=chunkHash[chunkHash.size()-1];
+    cout<<"token  "<<token<<endl;
+     send(s_des,token.c_str(),strlen(token.c_str()),0);
+   }else{
+    cout<<" The mentioned file does not exist "<<endl;
+   }
+    
+
+
+    
+
+
+
+}
+
+int isFileExist(string path)
+{
+    FILE *file;
+    if ((file = fopen(path.c_str(), "r")))
+    {
+        fclose(file);
+        return 1;
+    }
+
+    return 0;
 }

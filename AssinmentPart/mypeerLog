@@ -1,21 +1,22 @@
-Oct 31 20:53:53 : Processed Arguments
-Oct 31 20:53:53 : Socket created successfully.
-Oct 31 20:53:53 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
-Oct 31 20:53:53 : server creation error
-Oct 31 20:53:57 : Socket created successfully.
-Oct 31 20:53:57 : Connected with sock =  4
-Oct 31 20:53:57 : medLogged in successfully
-Oct 31 20:54:14 : Socket created successfully.
-Oct 31 20:54:14 : Connected with sock =  5
-Oct 31 20:54:27 : Socket created successfully.
-Oct 31 20:54:27 : Connected with sock =  6
-Oct 31 20:55:43 : Socket created successfully.
-Oct 31 20:55:43 : Connected with sock =  7
-Oct 31 20:55:43 : nano left n group succesfully 
-Oct 31 20:55:49 : Socket created successfully.
-Oct 31 20:55:49 : Connected with sock =  8
-Oct 31 20:55:55 : Socket created successfully.
-Oct 31 20:55:55 : Connected with sock =  9
-Oct 31 20:55:55 : nano left m group succesfully 
-Oct 31 20:55:59 : Socket created successfully.
-Oct 31 20:55:59 : Connected with sock =  10
+Nov  1 00:26:14 : Processed Arguments
+Nov  1 00:26:14 : Socket created successfully.
+Nov  1 00:26:14 : Tracker seems Busy.. Trying to connect with Tracker 2.. 
+Nov  1 00:26:14 : server creation error
+Nov  1 00:26:21 : Socket created successfully.
+Nov  1 00:26:21 : Connected with sock =  4
+Nov  1 00:26:27 : Socket created successfully.
+Nov  1 00:26:27 : Connected with sock =  5
+Nov  1 00:26:27 : nanoLogged in successfully
+Nov  1 00:26:36 : Socket created successfully.
+Nov  1 00:26:36 : Connected with sock =  6
+Nov  1 00:26:36 : nano created hel group succesfully 
+Nov  1 00:26:42 : Socket created successfully.
+Nov  1 00:26:42 : Connected with sock =  7
+Nov  1 00:26:56 : Socket created successfully.
+Nov  1 00:26:56 : Connected with sock =  8
+Nov  1 00:27:04 : Socket created successfully.
+Nov  1 00:27:04 : Connected with sock =  9
+Nov  1 00:27:19 : Socket created successfully.
+Nov  1 00:27:19 : Connected with sock =  10
+Nov  1 00:27:28 : Socket created successfully.
+Nov  1 00:27:28 : Connected with sock =  11

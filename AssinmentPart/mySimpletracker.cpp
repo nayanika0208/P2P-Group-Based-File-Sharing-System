@@ -35,11 +35,13 @@ struct groupInfo{
 struct file_info
 {
 	string fileName; //assuming file name will be unique
-	int filesize;
+	 unsigned long long filesize;
 	string fullFileSha;
 	vector<string> chunkWiseSha;
 	int noOfChunks;
 };
+
+
 
 
 unordered_map<string,struct userInfo >userToUserInfo;
@@ -49,7 +51,7 @@ unordered_map<string,struct groupInfo >GroupToGroupInfo;
 unordered_map<string,set<string> >pendingInvites;
 unordered_map<string,set<string> >usersIngroup;
 unordered_map<string,set<string> >FilesInGroup;
-unordered_map< string,set<string > > seederList;
+unordered_map< string,set<string > > seederList;//file name to users
 
 
 string tracker_info_path,log_file="./mytrackerLog1";
@@ -79,6 +81,7 @@ void  leave_group(string groupId,string userId,int clientSocketDes);
 void  list_groups(int clientSocketDes);
 void  accept_requests(int clientSocketDes,string groupId,string userId,string currentUser);
 void  list_requests(int clientSocketDes,string groupId,string currentUser);
+void list_files(int clientSocketDes,string group_id);
 
 
 int main(int argc, char *argv[]){
@@ -307,12 +310,38 @@ void peerService(int clientSocketDes,string ip,int port)
 	
 	else if(myCommand=="upload_file")
 	{
-	  // cout<<"in line 184"<<endl;
-   //    string group_id=requestToServe[1];
-   //    string FileId=requestToServe[2];
-   //    string IPport=requestToServe[3];
-   //    cout<<"in upload "<<group_id<<" "<<FileId<<" "<<IPport<<endl;
-   //    upload_file(clientSocketDes,group_id,FileId,IPport);
+
+     string FileId=requestToServe[1];
+	 file_info f_info;
+     f_info.fileName=FileId;
+     f_info.filesize=stoull(requestToServe[4]);
+     f_info.fullFileSha=requestToServe[6];
+     f_info.noOfChunks=stoi(requestToServe[5]);
+     for(int i=7;i<requestToServe.size();i++){
+      	f_info.chunkWiseSha.push_back(requestToServe[i]);
+      }
+      
+      fileToFIleInfo[requestToServe[1]]=f_info;
+
+      string group_id=requestToServe[2];
+      string user_id=requestToServe[3];
+      if(GroupToGroupInfo.find(group_id)!=GroupToGroupInfo.end()){
+      	if(usersIngroup[group_id].find(user_id)!= usersIngroup[group_id].end()){
+      		if(FilesInGroup[group_id].find(FileId)==FilesInGroup[group_id].end()){
+      			FilesInGroup[group_id].insert(FileId);
+      		}
+      		seederList[FileId].insert(user_id);
+      	}
+      }
+  
+     
+
+      
+
+
+      
+      cout<<"Uplaoding "<<group_id<<" "<<FileId<<" "<<userToUserInfo[user_id].portno<<endl;
+      // upload_file(clientSocketDes,group_id,FileId,IPport);
 	}
 	else if(myCommand=="share_file_details")
 	{
@@ -345,6 +374,12 @@ void peerService(int clientSocketDes,string ip,int port)
 	else if(myCommand=="list_groups")
 	{
 		list_groups(clientSocketDes);
+
+	}
+	else if(myCommand=="list_files")
+	{
+		 string group_id=requestToServe[1];
+		list_files(clientSocketDes,group_id);
 
 	}
 	else if(myCommand=="accept_request")
@@ -506,4 +541,16 @@ void  list_requests(int clientSocketDes,string groupId,string currentUser)
 	}
 	close(clientSocketDes);
 	
+}
+void list_files(int clientSocketDes,string group_id){
+ 
+  string info="";
+  for(auto i:FilesInGroup[group_id])
+   {
+		      info+= i;
+		      info+=";";
+		    
+    }
+	send(clientSocketDes,info.c_str(),strlen(info.c_str()),0);
+
 }
