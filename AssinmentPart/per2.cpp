@@ -1034,8 +1034,11 @@ void get_chunk(int newsocketdes,string Filepath,int chunk_no,int chnk_size)
     fseek(fp,chunk_no*512*1024,SEEK_SET);
     size_t num_read = fread(buffer, sizeof(char), chnk_size, fp);
   
-    cout<<buffer<<endl;
-  send(newsocketdes,buffer,num_read,0);
-   close(newsocketdes);
+    if (num_read < chnk_size){ 
+      printf("Reached EOF!\n");
+       
+     
+    
   
-}
+ 
+    
