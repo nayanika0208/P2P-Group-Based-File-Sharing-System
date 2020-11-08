@@ -81,28 +81,30 @@ void serverequest(int newsocketdes,string ip,int port);
 void download_file(vector<string>clientRequest);
 void download_chunk(string seeder_ip,int seeder_port,int chunk_no,int chunk_size,string seeder_path,string destination);
 void get_chunk(int newsocketdes,string Filepath,int chunk_no,int chnk_size);
+void logout();
+void Show_downloads();
 
 int main(int argc,char ** argv)
 {
    sem_init(&m,0,1);
-	if(argc!=3)
-	{
-		cout<<"Opps! Please give command line arguent in the format <IP>:<PORT> traker_info.txt"<<endl;
-		perror("Error in command line argument list ");
-		return -1;
-	}
+  if(argc!=3)
+  {
+    cout<<"Opps! Please give command line arguent in the format <IP>:<PORT> traker_info.txt"<<endl;
+    perror("Error in command line argument list ");
+    return -1;
+  }
     process_args(argv);
       writeLog("Processed Arguments");
- 	cout<<serverip<<" "<<serverport<<" "<<tracker1_ip<<" "<<tracker1_port<<" "<<tracker2_ip<<" "<<tracker2_port<<endl;
- 	
- 	thread serverthread(peerAsServer);
- 	serverthread.detach();
- 	    
- 	
+  cout<<serverip<<" "<<serverport<<" "<<tracker1_ip<<" "<<tracker1_port<<" "<<tracker2_ip<<" "<<tracker2_port<<endl;
+    int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+  thread serverthread(peerAsServer);
+  serverthread.detach();
+      
+  
    while(true){
      string request;
-   	  getline(cin,request);
-      cout<<request<<endl;
+      getline(cin,request);
+      // cout<<request<<endl;
       vector<string>clientRequest=StringParser(request,' ');
       string command=clientRequest[0];
       cout<<command<<endl;
@@ -120,7 +122,7 @@ int main(int argc,char ** argv)
             {
 
             threadVector.push_back(thread(create_user,clientRequest));
-            	
+              
          }
       }
       else if(command=="login")
@@ -128,33 +130,34 @@ int main(int argc,char ** argv)
 
             if(clientRequest.size()!=3)
             {
-            	cout<<"invalid arguments for login"<<endl;
+              cout<<"invalid arguments for login"<<endl;
                continue;
             }
             else
             {
 
-            	
-            	threadVector.push_back(thread(login,clientRequest));
+              
+              threadVector.push_back(thread(login,clientRequest));
 
             }
       }
       else if(command=="create_group")
       {
-      	
-      	    if(!isLoggedIn)
-       		    {
-       		     	cout<<"Please first login into the system"<<endl;
-       			
-       		    }
+        
+            if(!isLoggedIn)
+              {
+                cout<<"Please first login into the system"<<endl;
+                continue;
+            
+              }
             if(clientRequest.size()!=2)
             {
-            	cout<<"Invalid arguments for creating group"<<endl;
+              cout<<"Invalid arguments for creating group"<<endl;
                
             }
             else
             {
-            	threadVector.push_back(thread(create_group,clientRequest));
+              threadVector.push_back(thread(create_group,clientRequest));
             }
       }
       else if(command=="join_group")
@@ -196,13 +199,13 @@ int main(int argc,char ** argv)
             {
                threadVector.push_back(thread(leave_group,clientRequest));
             }
-      	
+        
 
       }
       else if(command=="requests")
       {
       
-      	 if(!isLoggedIn)
+         if(!isLoggedIn)
           {
                cout<<"Please first login into the system"<<endl;
                continue;
@@ -253,7 +256,7 @@ int main(int argc,char ** argv)
           threadVector.push_back(thread(list_groups));
 
            }
-      	
+        
       }
       else if(command=="list_files")
       {
@@ -266,13 +269,13 @@ int main(int argc,char ** argv)
             if(clientRequest.size()!=2)
             {
                cout<<"Enter the valid argument"<<endl;
-              
+                
             }
             else
             {
                threadVector.push_back(thread(list_files,clientRequest));
             }
-      	
+        
 
       }
       else if(command=="upload_file")
@@ -318,30 +321,40 @@ int main(int argc,char ** argv)
       }
       else if(command=="logout")
       {
-         // cout<<"In line 894"<<endl;
+         
+        if(!isLoggedIn)
+          {
+               cout<<"you are not logged in to the system"<<endl;
+               continue;
+         }
+          if(clientRequest.size()!=1)
+            {
+                 cout<<"Enter the valid argument"<<endl;
+            }
+            else {
+              
+              threadVector.push_back(thread(logout));
 
-         //     if(!islogedin)
-         //  {
-         // cout<<"Please enter the login cred to enter into the system"<<endl;
-         // goto l2;
-         //  }
-         //    if(clientRequest.size()!=1)
-         //    {
-         //       cout<<"Enter the valid argument"<<endl;
-         //       goto l2;
-         //    }
-         //    else
-         //    {
-         //       threadVector.push_back(thread(logout));
-         //    }
-
-      	cout<<" Not imlemented yet " <<command<<endl;
+            }
 
         
       }
       else if(command=="Show_downloads")
       {
-            cout<<"Not Inplemented "<<endl;
+             if(!isLoggedIn)
+          {
+               cout<<"you are not logged in to the system"<<endl;
+               continue;
+         }
+          if(clientRequest.size()!=1)
+            {
+                 cout<<"Enter the valid argument"<<endl;
+            }
+            else {
+              
+              threadVector.push_back(thread(Show_downloads));
+
+            }
        
       }
       else if(command=="stop_share")
@@ -351,18 +364,18 @@ int main(int argc,char ** argv)
       }
       else if(command=="exit")
       {
-        cout<<"Good bye"<<endl;
+        cout<<"Exiting the program"<<endl;
         return 0;
       }
       else
       {
-      	cout<<"In line 387"<<endl;
+        // cout<<"In line 387"<<endl;
 
-      	// cout<<"Please Enter a valid command "<<endl;
+        cout<<"Please Enter a valid command "<<endl;
       }
     
- 	}
- 	return 0;
+  }
+  return 0;
 } 
 
 
@@ -373,32 +386,32 @@ vector<string>StringParser(string s,char del)
   string temp;
   while(getline(ss,temp,del))
   {
-  	//cout<<"hi"<<endl;
+    //cout<<"hi"<<endl;
     a.push_back(temp);
   }
   return a;
 }
 
 void process_args(char *argv[])
-{		string clientIPort=argv[1];
-        string tracker_info_path=argv[2];	
+{   string clientIPort=argv[1];
+        string tracker_info_path=argv[2]; 
 
         vector<string>IPort=StringParser(clientIPort,':');
-	    serverip=IPort[0];
-	    serverport=IPort[1];   
-	    fstream serverfilestream(tracker_info_path,ios::in);	    
-	    string temp;
-	    while(getline(serverfilestream,temp,'\n'))
-	    {
-	    	IP_and_port_of_Trackers.push_back(temp);
-	    }
-	   
-	    IPort=StringParser(IP_and_port_of_Trackers[0],':');
-	    tracker1_ip=IPort[0];
-	 	tracker1_port=IPort[1];
-	 	IPort=StringParser(IP_and_port_of_Trackers[1],':');
-	 	tracker2_ip=IPort[0];
-	 	tracker2_port=IPort[1];
+      serverip=IPort[0];
+      serverport=IPort[1];   
+      fstream serverfilestream(tracker_info_path,ios::in);      
+      string temp;
+      while(getline(serverfilestream,temp,'\n'))
+      {
+        IP_and_port_of_Trackers.push_back(temp);
+      }
+     
+      IPort=StringParser(IP_and_port_of_Trackers[0],':');
+      tracker1_ip=IPort[0];
+    tracker1_port=IPort[1];
+    IPort=StringParser(IP_and_port_of_Trackers[1],':');
+    tracker2_ip=IPort[0];
+    tracker2_port=IPort[1];
 }
 
 fstream getLogFile()
@@ -406,10 +419,10 @@ fstream getLogFile()
     logfile_mutex.lock();
     fstream my_file;
     if(startingLogFile == false){
-    	 my_file.open(log_file, ios::app);
+       my_file.open(log_file, ios::app);
     }else {
-    	my_file.open(log_file, ios::out);
-    	startingLogFile = false;
+      my_file.open(log_file, ios::out);
+      startingLogFile = false;
     }
    
     return my_file;
@@ -434,10 +447,10 @@ int socket_creation_to_server(string ip_address, int port_address)
 
     if ((sock = socket(AF_INET, SOCK_STREAM, 0)) < 0)
     {
-        writeLog("Socket creation error.");
+        // writeLog("Socket creation error.");
         exit(EXIT_FAILURE);
     }
-    writeLog("Socket created successfully.");
+    // writeLog("Socket created successfully.");
     memset(&tracker1_address, '0', sizeof(tracker1_address));
 
     tracker1_address.sin_family = AF_INET;
@@ -445,22 +458,23 @@ int socket_creation_to_server(string ip_address, int port_address)
 
     if (inet_pton(AF_INET, ip_address.c_str(), &tracker1_address.sin_addr) <= 0)
     {
-        writeLog("Invalid Tracker 1 address/ Address not supported. => " + ip_address + " is INVALID IP");
+        // writeLog("Invalid Tracker 1 address/ Address not supported. => " + ip_address + " is INVALID IP");
         exit(EXIT_FAILURE);
     }
 
     if (connect(sock, (struct sockaddr *)&tracker1_address, sizeof(tracker1_address)) < 0)
     {
-        writeLog("Tracker seems Busy.. Trying to connect with Tracker 2.. ");
+        // writeLog("Tracker seems Busy.. Trying to connect with Tracker 2.. ");
         return -1;
     }
 
-    writeLog("Connected with sock =  " + to_string(sock));
+    // writeLog("Connected with sock =  " + to_string(sock));
+
     return sock;
 }
 void peerAsServer(){
 
-	int socketdes;
+  int socketdes;
    int newsocketdes;
    int val;
    socklen_t size;
@@ -524,7 +538,7 @@ void serverequest(int newsocketdes,string ip,int port)
    string request=requestarray[0];
    if(request=="send_packet")
    {
-    cout<<"Please send the required packet"<<endl;
+    // cout<<"Please send the required packet"<<endl;
       string fpath=requestarray[1];
       int chnk_no=stoi(requestarray[2]);
       int cs=stoi(requestarray[3]);
@@ -532,7 +546,7 @@ void serverequest(int newsocketdes,string ip,int port)
    }
    else
    {
-      cout<<"Some randome data is coming"<<endl;
+      cout<<"Invalid request"<<endl;
       cout<<"please send it again"<<endl;
     }
 }
@@ -559,7 +573,7 @@ void login(vector<string > clientRequest)
 {
    int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
    string token="login;"+clientRequest[1]+";"+clientRequest[2]+";"+serverip+";"+serverport;
-   cout<<token<<endl;
+   // cout<<token<<endl;
    send(s_des,token.c_str(),strlen(token.c_str()),0);
 
 
@@ -570,10 +584,10 @@ void login(vector<string > clientRequest)
            isLoggedIn=true;
           current_user=clientRequest[1];
           cout<<clientRequest[1]<<" Logged in successfully"<<endl;
-          writeLog(clientRequest[1]+"Logged in successfully");
+          // writeLog(clientRequest[1]+"Logged in successfully");
         }else{
          cout<<"Wrong Credentials"<<endl;
-         writeLog("Login failed"); 
+         // writeLog("Login failed"); 
      }
 }
 void list_requests(vector<string > clientRequest)
@@ -609,8 +623,8 @@ void create_group(vector<string>clientRequest)
    int valRead=read( s_des , status, sizeof(status));
    if(status[0]=='1')
    {
-    cout<<clientRequest[1]<<"Group created succesfully"<<endl;
-    writeLog(current_user+" created "+ clientRequest[1]+" group succesfully ");
+    cout<<clientRequest[1]<<" Group created succesfully"<<endl;
+    // writeLog(current_user+" created "+ clientRequest[1]+" group succesfully ");
    }
    else
    {
@@ -631,9 +645,9 @@ void join_group(vector<string>clientRequest)
    if(status[0]=='1')
    {
     cout<<current_user<<" requested to join  "<< clientRequest[1]<<endl;
-    writeLog(current_user+" requested to join  "+ clientRequest[1]);
+    // writeLog(current_user+" requested to join  "+ clientRequest[1]);
    }else if(status[0] == '2'){
-    cout<<current_user<<"is already part Group "<<clientRequest[1]<<endl;
+    cout<<current_user<<" is already part Group "<<clientRequest[1]<<endl;
 
    }
 
@@ -657,7 +671,7 @@ void leave_group(vector<string>clientRequest)
    if(status[0]=='1')
    {
     cout<<current_user<<"  Left "<< clientRequest[1]<<"  group succesfully"<<endl;
-    writeLog(current_user+" left "+ clientRequest[1]+" group succesfully ");
+    // writeLog(current_user+" left "+ clientRequest[1]+" group succesfully ");
    }
    else
    {
@@ -791,7 +805,7 @@ void upload_file(vector<string>clientRequest){
     vector<string> fpath = StringParser(filepath,'/');
     string fileName=fpath[fpath.size()-1];
 
-    cout<<" final hash "<<final_hash<<endl;
+    // cout<<" final hash "<<final_hash<<endl;
    
     string token="upload_file;"+filepath+";"+fileName+";"+clientRequest[2]+";"+current_user+";"+to_string(f_size)+";"+to_string(chunks)+";"+final_hash+";";
 
@@ -834,7 +848,7 @@ int isFileExist(string path)
 
 void download_file(vector<string>clientRequest)
 {
-  cout<<" downloading file "<<endl;
+  
    int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
     string group_id=clientRequest[1];
     string FileId=clientRequest[2];
@@ -854,7 +868,7 @@ void download_file(vector<string>clientRequest)
     string buff(buffer);
     vector<string>List=StringParser(buff,';');
     int no_of_seeders=stoi(List[0]);
-    cout<<" No of seeders "<<no_of_seeders<<endl;
+    // cout<<" No of seeders "<<no_of_seeders<<endl;
 
     vector<string> seeder_ip_port;
     for(int i=1;i<List.size();i++){
@@ -862,29 +876,30 @@ void download_file(vector<string>clientRequest)
     }
 
 
-    cout<<" get thr filr info from the tracker "<<endl;
+    // cout<<" get thr file info from the tracker "<<endl;
 
-    memset(buffer,0,sizeof(buffer));
+   bzero(buffer,BUFFER_SIZE);
     valRead=read( s_des ,buffer, sizeof(buffer));
      string fileInfo(buffer);
-     cout<<" file info "<<fileInfo<<endl;
-     cout<<" here "<<endl;
+     // cout<<" file info "<<fileInfo<<endl;
+     // cout<<" here "<<endl;
      vector<string>file_info_list=StringParser(fileInfo,';');
     
      unsigned long long fileSize=stoull(file_info_list[0]);
 
      string fullFileHash=file_info_list[1];
     int no_of_chunks=stoi(file_info_list[2]);
-     cout<<" here 2 "<<endl;
-    for(int i=0;i<seeder_ip_port.size();i++){
-      cout<<seeder_ip_port[i]<<endl;
-      // vector<string>temp=StringParser(seeder_ip_port[i],':');
-      // string seed_ip=temp[0];
-      // int seed_port=stoi(temp[1]);
-      // cout<<seed_ip<<"  "<<seed_port<<endl;
+    // cout<<"No of chunks "<<no_of_chunks<<endl;
+    //  cout<<" here 2 "<<endl;
+    // for(int i=0;i<seeder_ip_port.size();i++){
+    //   cout<<seeder_ip_port[i]<<endl;
+    //   // vector<string>temp=StringParser(seeder_ip_port[i],':');
+    //   // string seed_ip=temp[0];
+    //   // int seed_port=stoi(temp[1]);
+    //   // cout<<seed_ip<<"  "<<seed_port<<endl;
      
 
-    }
+    // }
      string ss="";
    for(int i=0;i<fileSize;i++)
    {
@@ -896,96 +911,32 @@ void download_file(vector<string>clientRequest)
     vector<thread>FileDownloadThread;
 
    int chunk_size= 512 * 1024;
-    if(no_of_chunks<=no_of_seeders){
-      for(int i=0;i<no_of_chunks;i++){
-          vector<string>temp=StringParser(seeder_ip_port[i],':');
+
+   int c_no=0;
+   int s_no=0;
+   cout<<" downloading file "<<endl;
+   while(c_no < no_of_chunks){
+      cout<<" downloading chunk no "<<c_no <<"  from seeder no "<<s_no<<endl;
+       vector<string>temp=StringParser(seeder_ip_port[s_no],':');
         string seed_ip=temp[0];
         int seed_port=stoi(temp[1]);
-        int curr_chnk_size=(i==no_of_chunks-1)?(fileSize%chunk_size): chunk_size;
+        int curr_chnk_size=(c_no==no_of_chunks-1)?(fileSize%chunk_size): chunk_size;
         string seeder_path=temp[3];
         
 
         try{
-          FileDownloadThread.push_back(thread(download_chunk,seed_ip,seed_port,i,curr_chnk_size, seeder_path,destination));
+          FileDownloadThread.push_back(thread(download_chunk,seed_ip,seed_port,c_no,curr_chnk_size, seeder_path,destination));
  
         }
         catch (const exception &ex)
             {
                 cout<<" thread exception"<<endl;
             }
+
+           c_no += 1;
+           s_no = (s_no +1)%seeder_ip_port.size(); 
           }
 
-    }else{
-      int chunk_per_user=no_of_chunks/no_of_seeders;
-      int chunk_left=no_of_chunks%no_of_seeders;
-      if(no_of_chunks % no_of_seeders == 0){
-        for(int i=0;i<no_of_seeders;i++){
-           vector<string>temp=StringParser(seeder_ip_port[i],':');
-        string seed_ip=temp[0];
-        int seed_port=stoi(temp[1]);
-        
-        string seeder_path=temp[3];
-        int curr_chnk_size;
-         for(int j=0;j<chunk_per_user;j++){
-          if(i == no_of_seeders -1&& j== chunk_per_user ){
-            curr_chnk_size=(fileSize%chunk_size);
-          }else{
-              curr_chnk_size=chunk_size;
-          }
-
-          try{
-          FileDownloadThread.push_back(thread(download_chunk,seed_ip,seed_port,i+j,curr_chnk_size, seeder_path,destination));
- 
-        }
-        catch (const exception &ex)
-            {
-                cout<<" thread exception"<<endl;
-            }
-          }
-         }
-        }
-        else{
-         for(int i=0;i<no_of_seeders;i++){
-        vector<string>temp=StringParser(seeder_ip_port[i],':');
-        string seed_ip=temp[0];
-        int seed_port=stoi(temp[1]);
-        
-        string seeder_path=temp[3];
-        int  curr_chnk_size=chunk_size;
-         for(int j=0;j<chunk_per_user;j++){
-          try{
-          FileDownloadThread.push_back(thread(download_chunk,seed_ip,seed_port,i+j,curr_chnk_size, seeder_path,destination));
- 
-         }
-        catch (const exception &ex)
-            {
-                cout<<" thread exception"<<endl;
-            }
-          }
-         }
-         int c_chunk_no=no_of_chunks-chunk_left;
-         for(int i=0;i<chunk_left;i++){
-           vector<string>temp=StringParser(seeder_ip_port[i],':');
-          string seed_ip=temp[0];
-          int seed_port=stoi(temp[1]);
-          int curr_chnk_size=(i==chunk_left-1)?(fileSize%chunk_size): chunk_size;
-           string seeder_path=temp[3];
-         
-          try{
-          FileDownloadThread.push_back(thread(download_chunk,seed_ip,seed_port,c_chunk_no+i,curr_chnk_size, seeder_path,destination));
- 
-         }
-        catch (const exception &ex)
-            {
-                cout<<" thread exception"<<endl;
-            }
-          
-
-
-        
-        }
-      }
-    } 
 
 
 
@@ -999,6 +950,48 @@ void download_file(vector<string>clientRequest)
 
 
 
+     ifstream input_file;
+
+    size_t f_size = get_file_size(destination);
+    input_file.open(destination, ios::binary | ios::in);
+     unsigned long long s = fileSize;
+    if (s < chunk_size){
+       chunk_size = s;
+   
+    }
+    char tmp[chunk_size];
+    string final_hash_down="";
+   
+    while (input_file.read(tmp, chunk_size))
+    {
+        s -= chunk_size;
+        string md_1 = get_SHA1(tmp, chunk_size);
+        // cout<< md_1<<endl;
+         final_hash_down.append(md_1.substr(0, 20));
+       
+        if (s == 0)
+            break;
+        if (s < chunk_size)
+            chunk_size = s;
+    }
+
+ input_file.close();
+ // cout<<endl;
+ //  cout<<endl;
+  // cout <<" fullFileHash "<<fullFileHash<<endl;
+  // cout<<"download file hash "<<final_hash_down<<endl;
+
+
+    if(fullFileHash == final_hash_down){
+      // cout<<" it should be added to seeder list "<<endl;
+      cout<<"File downloaded succesfully"<<endl;
+      int s_des2=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+     
+     string token2="add_to_seeder_list;"+group_id+";"+FileId+";"+destination+";"+current_user;
+      send(s_des2,token2.c_str(),strlen(token2.c_str()),0);
+    }
+ // cout<<endl;
+ //  cout<<endl;
 
 }
 
@@ -1007,35 +1000,108 @@ void download_file(vector<string>clientRequest)
 
 
 void download_chunk(string seeder_ip,int seeder_port,int chunk_no,int chunk_size,string seeder_path,string destination){
-  cout<<"i will download the chunk "<<endl;
-  cout<<seeder_ip <<" "<<seeder_port<<endl;
-  cout<<destination<<endl;
+   sem_wait(&m);
+  //   cout<<endl;
+  // cout<<endl;
+  // cout<<"i will download the chunk no "<<chunk_no<<endl;
+  // cout<<seeder_ip <<" "<<seeder_port<<endl;
+  // cout<<destination<<endl;
+
+  
+
+ 
+  int seek_size=chunk_no*512*1024;
+  int read_data=0;
+  while(read_data < chunk_size){
+     int temp_chunk_size=32*1024;
+    if(chunk_size - read_data < temp_chunk_size){
+      temp_chunk_size =chunk_size - read_data ;
+    }
   int s_des=socket_creation_to_server(seeder_ip,seeder_port);
-      string t_t="send_packet;"+seeder_path+";"+to_string(chunk_no)+";"+to_string(chunk_size);
+    string t_t="send_packet;"+seeder_path+";"+to_string(seek_size + read_data)+";"+to_string(temp_chunk_size);
       send(s_des,t_t.c_str(),strlen(t_t.c_str()),0);
-     char buffer[chunk_size];
+     char buffer[ temp_chunk_size];
       fstream in;
+       // cout<<" dat size requested from  other side "<<temp_chunk_size<<endl;
       in.open(destination.c_str(),ios::out|ios::in|ios::binary);
-      in.seekp(chunk_no*512*1024,ios::beg);
-      int val=read(s_des,buffer,chunk_size);
+      in.seekp(seek_size + read_data,ios::beg);
+      int val=read(s_des,buffer,temp_chunk_size);
+      // cout<<" dat size recieved from  other side "<<val<<endl;
+     
       in.write(buffer,val);
+
+  //    cout<<endl;
+  // cout<<endl;  
+   read_data+=temp_chunk_size;
+   shutdown(s_des, SHUT_RDWR);
+    close(s_des);
+  }
+
+      
+  sem_post(&m); 
 
 }
 
 
-void get_chunk(int newsocketdes,string Filepath,int chunk_no,int chnk_size)
+
+void get_chunk(int newsocketdes,string Filepath,int to_read_from,int chnk_size)
 {
+  // cout<<endl;
+  // cout<<endl;
+  // cout<<"**** "<<endl;
+  // cout<<" I requested chunk of size "<<chnk_size<<endl;
   
-   FILE *fp=fopen(Filepath.c_str(),"rb");
- 
+   
+  fstream in;
+  in.open(Filepath.c_str(),ios::out|ios::in|ios::binary);
   
   char buffer[chnk_size];
  
-    fseek(fp,chunk_no*512*1024,SEEK_SET);
-    size_t num_read = fread(buffer, sizeof(char), chnk_size, fp);
+    in.seekp(to_read_from,ios::beg);
+    in.read(buffer, chnk_size);
   
-    cout<<buffer<<endl;
-  send(newsocketdes,buffer,num_read,0);
+    // cout<<buffer<<endl;
+  //    cout<<" I read  "<<sizeof(buffer)<<endl;
+  //    cout<<"**** "<<endl;
+  //     cout<<endl;
+  // cout<<endl;
+  send(newsocketdes,buffer,sizeof(buffer),0);
    close(newsocketdes);
   
+}
+
+
+void logout(){
+  isLoggedIn=false;
+  int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="logout;"+current_user;
+  
+   send(s_des,token.c_str(),token.size(),0);
+  
+    shutdown(s_des, SHUT_RDWR);
+    close(s_des);
+    
+    cout<<current_user <<" logged out "<<endl;
+}
+
+
+void Show_downloads(){
+  int s_des=socket_creation_to_server(tracker1_ip,stoi(tracker1_port));
+   string token="show_downloads";
+
+    send(s_des,token.c_str(),token.size(),0);
+    char buffer[BUFFER_SIZE]={0};
+     int val=read(s_des,buffer,BUFFER_SIZE);
+     string buf(buffer);
+     vector <string>show=StringParser(buf,';');
+     // cout<<buf<<endl;
+     for(int i=0;i<show.size();i++){
+      cout<<show[i]<<endl;
+     }
+    cout<<"D(Downloading), C(Complete)" <<endl;
+
+     shutdown(s_des, SHUT_RDWR);
+    close(s_des);
+
+
 }
